@@ -19,8 +19,6 @@ router.get("/", function (_req, res, next) {
 });
 
 router.post("/", function (req, res, next) {
-
-
   fs.readFile("./student_data.json", "utf8", (err, data) => {
     if (err) {
       console.error(err);
@@ -31,7 +29,7 @@ router.post("/", function (req, res, next) {
     const rollNos = jsonData.map((data) => data.RollNo);
     const lastRollNo = Math.max(...rollNos);
     var addStudent = {
-      rollNo:  lastRollNo + 1,
+      rollNo: lastRollNo + 1,
       name: req.body.name,
       gender: req.body.gender,
       physics: req.body.physics,
@@ -147,7 +145,7 @@ router.put("/upload", upload.single("file"), (req, res) => {
             jsonData.push(rowData);
             jsonData.forEach((newRow) => {
               var duplicate = existingData.find(
-                (existingRow) => existingRow.RollNo === newRow.RollNo
+                (existingRow) => existingRow.rollNo === newRow.rollNo
               );
 
               if (!duplicate) {
@@ -155,6 +153,12 @@ router.put("/upload", upload.single("file"), (req, res) => {
               }
             });
           }
+        });
+        // existingData.sort((a, b) =>
+        //   a.rollNo.localeCompare(b.rollNo, undefined, { numeric: true })
+        // );
+        existingData.sort((a, b) => {
+          return parseInt(a.rollNo) - parseInt(b.rollNo);
         });
 
         fs.writeFile(
@@ -166,7 +170,15 @@ router.put("/upload", upload.single("file"), (req, res) => {
               res.status(500).send("Error writing data file");
               return;
             }
+            console.log(existingData);
             res.json(existingData);
+            fs.unlink(filePath, (err) => {
+              if (err) {
+                console.error(err);
+                return;
+              }
+              console.log("Uploaded file removed");
+            });
           }
         );
       })
