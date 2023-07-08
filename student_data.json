@@ -1,42 +1,66 @@
 [
     {
-        "rollNo": "1",
-        "name": "Ram",
+        "RollNo": 1,
+        "Name": "Ram",
+        "Gender": "Male",
+        "Physics": 34,
+        "Maths": 44,
+        "English": 67
+    },
+    {
+        "RollNo": 2,
+        "Name": "Ganesh",
+        "Gender": "Male",
+        "Physics": 56,
+        "Maths": 55,
+        "English": 67
+    },
+    {
+        "RollNo": 3,
+        "Name": "Jayesh",
+        "Gender": "Male",
+        "Physics": 567,
+        "Maths": 66,
+        "English": 67
+    },
+    {
+        "RollNo": 4,
+        "Name": "Jayesh",
+        "Gender": "Male",
+        "Physics": 5,
+        "Maths": 87,
+        "English": 67
+    },
+    {
+        "RollNo": 5,
+        "Name": "Paresh",
+        "Gender": "Male",
+        "Physics": 6,
+        "Maths": 67,
+        "English": 6
+    },
+    {
+        "RollNo": 6,
+        "Name": "Jaya",
+        "Gender": "female",
+        "Physics": 45,
+        "Maths": 43,
+        "English": 44
+    },
+    {
+        "RollNo": 7,
+        "Name": "jay",
+        "Gender": "male",
+        "Physics": 56,
+        "Maths": 78,
+        "English": 90
+    },
+    {
+        "rollNo": 8,
+        "name": "praisearray",
         "gender": "Male",
-        "physics": "98",
-        "maths": "78",
-        "english": "78"
-    },
-    {
-        "rollNo": "2",
-        "name": "sham",
-        "gender": "male",
-        "physics": "45",
-        "maths": "67",
-        "english": "67"
-    },
-    {
-        "rollNo": "3",
-        "name": "sham",
-        "gender": "male",
-        "physics": "45",
-        "maths": "67",
-        "english": "67"
-    },
-    {
-        "rollNo": "4",
-        "name": "sham",
-        "gender": "male",
-        "physics": "45",
-        "maths": "67",
-        "english": "67"
-    },
-    {
-        "rollNo": "8",
-        "name": "sham",
-        "gender": "male",
-        "physics": "45",
-        "maths": "67",
-        "english": "67"
+        "physics": "1",
+        "maths": "1",
+        "english": "1"
     }
 ]

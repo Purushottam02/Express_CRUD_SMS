@@ -19,14 +19,8 @@ router.get("/", function (_req, res, next) {
 });
 
 router.post("/", function (req, res, next) {
-  var addStudent = {
-    rollNo: req.body.rollNo,
-    name: req.body.name,
-    gender: req.body.gender,
-    physics: req.body.physics,
-    maths: req.body.maths,
-    english: req.body.english,
-  };
+
+
   fs.readFile("./student_data.json", "utf8", (err, data) => {
     if (err) {
       console.error(err);
@@ -34,6 +28,16 @@ router.post("/", function (req, res, next) {
       return;
     }
     const jsonData = JSON.parse(data);
+    const rollNos = jsonData.map((data) => data.RollNo);
+    const lastRollNo = Math.max(...rollNos);
+    var addStudent = {
+      rollNo:  lastRollNo + 1,
+      name: req.body.name,
+      gender: req.body.gender,
+      physics: req.body.physics,
+      maths: req.body.maths,
+      english: req.body.english,
+    };
     jsonData.push(addStudent);
     fs.writeFile("./student_data.json", JSON.stringify(jsonData), (err) => {
       if (err) {
@@ -113,53 +117,64 @@ router.put("/edit/:rollNo", (req, res) => {
   });
 });
 
-router.post("/upload", upload.single("file"), (req, res) => {
+router.put("/upload", upload.single("file"), (req, res) => {
   const filePath = req.file.path;
-
   const workbook = new ExcelJS.Workbook();
-  workbook.xlsx
-    .readFile(filePath)
-    .then((workbook) => {
-      const worksheet = workbook.getWorksheet(1);
-      const jsonData = [];
 
-      worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber !== 1) {
-          const rowData = {};
+  fs.readFile("./student_data.json", "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send("Error reading data file");
+      return;
+    }
+    workbook.xlsx
+      .readFile(filePath)
+      .then(() => {
+        const worksheet = workbook.getWorksheet(1);
+        const jsonData = [];
+        const existingData = JSON.parse(data);
 
-          row.eachCell((cell, colNumber) => {
-            const cellValue = cell.value;
-            const headerCell = worksheet.getRow(1).getCell(colNumber);
-            const headerValue = headerCell.value;
-            rowData[headerValue] = cellValue;
-          });
+        worksheet.eachRow((row, rowNumber) => {
+          if (rowNumber !== 1) {
+            const rowData = {};
 
-          jsonData.push(rowData);
-        }
-      });
-      
-      fs.readFile("./student_data.json", "utf8", (err, data) => {
-        if (err) {
-          console.error(err);
-          res.status(500).send("Error reading data file");
-          return;
-        }
-        // const jsonData = JSON.parse(data);
-        // jsonData.push(addStudent);
-        fs.writeFile("./student_data.json", JSON.stringify(jsonData), (err) => {
-          if (err) {
-            console.error(err);
-            res.status(500).send("Error reading data file");
-            return;
+            row.eachCell((cell, colNumber) => {
+              const cellValue = cell.value;
+              const headerCell = worksheet.getRow(1).getCell(colNumber);
+              const headerValue = headerCell.value;
+              rowData[headerValue] = cellValue;
+            });
+            jsonData.push(rowData);
+            jsonData.forEach((newRow) => {
+              var duplicate = existingData.find(
+                (existingRow) => existingRow.RollNo === newRow.RollNo
+              );
+
+              if (!duplicate) {
+                existingData.push(newRow);
+              }
+            });
           }
-          res.send("succses");
         });
+
+        fs.writeFile(
+          "./student_data.json",
+          JSON.stringify(existingData),
+          (err) => {
+            if (err) {
+              console.error(err);
+              res.status(500).send("Error writing data file");
+              return;
+            }
+            res.json(existingData);
+          }
+        );
+      })
+      .catch((error) => {
+        console.log("Error:", error);
+        res.status(500).json({ error: "Failed to process the file." });
       });
-      res.json(jsonData);
-    })
-    .catch((error) => {
-      console.log("Error:", error);
-      res.status(500).json({ error: "Failed to process the file." });
-    });
+  });
 });
+
 module.exports = router;
