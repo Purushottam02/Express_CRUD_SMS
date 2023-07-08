@@ -1,0 +1,42 @@
+[
+    {
+        "rollNo": "1",
+        "name": "Ram",
+        "gender": "Male",
+        "physics": "98",
+        "maths": "78",
+        "english": "78"
+    },
+    {
+        "rollNo": "2",
+        "name": "sham",
+        "gender": "male",
+        "physics": "45",
+        "maths": "67",
+        "english": "67"
+    },
+    {
+        "rollNo": "3",
+        "name": "sham",
+        "gender": "male",
+        "physics": "45",
+        "maths": "67",
+        "english": "67"
+    },
+    {
+        "rollNo": "4",
+        "name": "sham",
+        "gender": "male",
+        "physics": "45",
+        "maths": "67",
+        "english": "67"
+    },
+    {
+        "rollNo": "8",
+        "name": "sham",
+        "gender": "male",
+        "physics": "45",
+        "maths": "67",
+        "english": "67"
+    }
+]
