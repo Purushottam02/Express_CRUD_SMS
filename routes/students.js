@@ -1,198 +1,109 @@
-var express = require("express");
-var router = express.Router();
-const fs = require("fs");
+const express = require("express");
+const router = express.Router();
 const multer = require("multer");
 const ExcelJS = require("exceljs");
 const upload = multer({ dest: "uploads/" });
+const StudentModel = require("../models/students.js");
 
-router.get("/", function (_req, res, next) {
-  fs.readFile("./student_data.json", "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send("Error reading data file");
-      return;
-    }
-    const jsonData = JSON.parse(data);
-    jsonData.sort((a, b) => {
-      return parseInt(a.rollNo) - parseInt(b.rollNo);
-    });
-    res.send(jsonData);
-  });
+router.get("/", async (_req, res, next) => {
+  try {
+    const students = await StudentModel.find({}, null, { sort: { rollNo: 1 } });
+    res.send(students);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error fetching data from MongoDB");
+  }
 });
 
-router.post("/", function (req, res, next) {
-  fs.readFile("./student_data.json", "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send("Error reading data file");
-      return;
-    }
-    const jsonData = JSON.parse(data);
-    const rollNos = jsonData.map((data) => data.rollNo);
-    const lastRollNo = Math.max(...rollNos);
-    var addStudent = {
+router.post("/", async (req, res, next) => {
+  try {
+    const { name, gender, physics, maths, english } = req.body;
+    const lastStudent = await StudentModel.findOne({}, null, {
+      sort: { rollNo: -1 },
+    });
+    const lastRollNo = lastStudent ? lastStudent.rollNo : 0;
+    const addStudent = new StudentModel({
       rollNo: lastRollNo + 1,
-      name: req.body.name,
-      gender: req.body.gender,
-      physics: req.body.physics,
-      maths: req.body.maths,
-      english: req.body.english,
-    };
-    jsonData.push(addStudent);
-    jsonData.sort((a, b) => {
-      return parseInt(a.rollNo) - parseInt(b.rollNo);
+      name,
+      gender,
+      physics,
+      maths,
+      english,
     });
-    fs.writeFile("./student_data.json", JSON.stringify(jsonData), (err) => {
-      if (err) {
-        console.error(err);
-        res.status(500).send("Error reading data file");
-        return;
-      }
-      res.send("succses");
-    });
-  });
+
+    await addStudent.save();
+    res.send("success");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error saving data to MongoDB");
+  }
 });
 
-router.get("/details/:rollNo", function (req, res, next) {
-  fs.readFile("./student_data.json", "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send("Error reading data file");
-      return;
-    }
-
-    jsonData = JSON.parse(data);
-    const stud = jsonData.find(
-      (s) => JSON.stringify(s.rollNo) === req.params.rollNo
-    );
-    res.send(stud);
-  });
+router.get("/details/:rollNo", async (req, res, next) => {
+  try {
+    const student = await StudentModel.findOne({ rollNo: req.params.rollNo });
+    res.send(student);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error fetching student details from MongoDB");
+  }
 });
 
-router.delete("/:rollNo", function (req, res, next) {
-  fs.readFile("./student_data.json", "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send("Error reading data file");
-      return;
-    }
-    jsonData = JSON.parse(data);
-    var jsonData = jsonData.filter(
-      (jsonData) => String(jsonData.rollNo) !== req.params.rollNo
-    );
-    fs.writeFile("./student_data.json", JSON.stringify(jsonData), (err) => {
-      if (err) {
-        console.error(err);
-        res.status(500).send("Error reading data file");
-        return;
-      }
-    });
-    setTimeout(() => {
-      res.send("succses");
-    }, 2000);
-  });
+router.delete("/:rollNo", async (req, res, next) => {
+  try {
+    await StudentModel.findOneAndDelete({ rollNo: req.params.rollNo });
+    res.send("success");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error deleting student from MongoDB");
+  }
 });
-router.put("/edit/:rollNo", (req, res) => {
+
+router.put("/edit/:rollNo", async (req, res) => {
   const rollNo = req.params.rollNo;
   const updatedStudent = req.body;
 
-  fs.readFile("./student_data.json", "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send("Error reading data file");
-    }
-
-    let jsonData = JSON.parse(data);
-    jsonData = jsonData.map((student) => {
-      if (student.rollNo === rollNo) {
-        return { ...student, ...updatedStudent };
-      }
-      return student;
-    });
-
-    fs.writeFile("./student_data.json", JSON.stringify(jsonData), (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).send("Error writing data file");
-      }
-
-      return res.send("success");
-    });
-  });
+  try {
+    await StudentModel.findOneAndUpdate({ rollNo }, updatedStudent);
+    res.send("success");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error updating student in MongoDB");
+  }
 });
 
-router.put("/upload", upload.single("file"), (req, res) => {
+router.put("/upload", upload.single("file"), async (req, res) => {
   const filePath = req.file.path;
   const workbook = new ExcelJS.Workbook();
 
-  fs.readFile("./student_data.json", "utf8", (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send("Error reading data file");
-      return;
-    }
+  try {
+    await workbook.xlsx.readFile(filePath);
+    const worksheet = workbook.getWorksheet(1);
+    const jsonData = [];
 
-    workbook.xlsx
-      .readFile(filePath)
-      .then(() => {
-        const worksheet = workbook.getWorksheet(1);
-        const jsonData = [];
-        let existingData = JSON.parse(data);
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber !== 1) {
+        const rowData = {};
 
-        worksheet.eachRow((row, rowNumber) => {
-          if (rowNumber !== 1) {
-            const rowData = {};
-
-            row.eachCell((cell, colNumber) => {
-              const cellValue = cell.value;
-              const headerCell = worksheet.getRow(1).getCell(colNumber);
-              const headerValue = headerCell.value;
-              rowData[headerValue] = cellValue;
-            });
-
-            const existingRowIndex = existingData.findIndex(
-              (existingRow) => existingRow.rollNo === rowData.rollNo
-            );
-
-            if (existingRowIndex !== -1) {
-              existingData[existingRowIndex] = rowData; // Overwrite existing row
-            } else {
-              existingData.push(rowData); // Add new row
-            }
-
-            jsonData.push(rowData);
-          }
+        row.eachCell((cell, colNumber) => {
+          const cellValue = cell.value;
+          const headerCell = worksheet.getRow(1).getCell(colNumber);
+          const headerValue = headerCell.value;
+          rowData[headerValue] = cellValue;
         });
 
-        existingData.sort((a, b) => {
-          return parseInt(a.rollNo) - parseInt(b.rollNo);
-        });
+        jsonData.push(rowData);
+      }
+    });
 
-        fs.writeFile(
-          "./student_data.json",
-          JSON.stringify(existingData),
-          (err) => {
-            if (err) {
-              console.error(err);
-              res.status(500).send("Error writing data file");
-              return;
-            }
+    const students = await StudentModel.create(jsonData);
+    res.json(students);
 
-            res.json(existingData);
-            fs.unlink(filePath, (err) => {
-              if (err) {
-                console.error(err);
-                return;
-              }
-            });
-          }
-        );
-      })
-      .catch((error) => {
-        console.log("Error:", error);
-        res.status(500).json({ error: "Failed to process the file." });
-      });
-  });
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    console.log("Error:", error);
+    res.status(500).json({ error: "Failed to process the file." });
+  }
 });
 
 module.exports = router;

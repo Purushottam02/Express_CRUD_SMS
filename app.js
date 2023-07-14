@@ -3,13 +3,20 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
-var studentsRouter = require("./routes/students");
+const studentsRouter = require("./routes/students");
+
+const mongoose = require("mongoose");
+mongoose
+  .connect("mongodb://127.0.0.1:27017/students", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("Connected to MongoDB Server..."))
+  .catch((err) => console.error("Error occured connecting to MongoDB...", err));
 
 var app = express();
-
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
@@ -20,14 +27,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 const authenticate = (req, res, next) => {
-  if(req.query['X-User'] === 'admin'){
+  if (req.query["X-User"] === "admin") {
     next();
-  }else{
+  } else {
     // res.send(401, 'unathorized request');
     next();
   }
-}
-app.use(authenticate)
+};
+app.use(authenticate);
 
 var cors = require("cors");
 app.use(cors());
